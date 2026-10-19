@@ -63,7 +63,8 @@ db.exec(schema);
 const insert = (table, val) => {
   const insertPrep = {
     song: db.prepare(
-      "INSERT INTO songs (title, path, albumId, folderId, codec, duration, bitRate, sampleRate, cover, releaseYear) VALUES (@title, @path, @albumId, @folderId, @codec, @duration, @bitRate, @sampleRate, @cover, @releaseYear)",
+      `INSERT INTO songs (title, path, albumId, folderId, codec, duration, bitRate, sampleRate, cover, releaseYear)
+      VALUES (@title, @path, @albumId, @folderId, @codec, @duration, @bitRate, @sampleRate, @cover, @releaseYear)`,
     ),
     album: db.prepare("INSERT INTO albums (name) VALUES (?)"),
     artist: db.prepare("INSERT INTO artists (name) VALUES (?)"),
@@ -240,14 +241,20 @@ ipcMain.handle("folder:prompt", async (event) => {
           metaData.common.title?.trim() ||
           path.basename(song.path, path.extname(song.path));
 
-        if (!find("folder", folderPath)) {
+        const foundFolder = find("folder", folderPath);
+        if (!foundFolder) {
           const result = insert("folder", folderPath);
           folderId = Number(result.lastInsertRowid);
+        } else {
+          folderId = foundFolder?.id;
         }
         if (albumName) {
-          if (!find("album", albumName)) {
+          const foundAlbum = find("album", albumName);
+          if (!foundAlbum) {
             const result = insert("album", albumName);
             albumId = Number(result.lastInsertRowid);
+          } else {
+            albumId = foundAlbum?.id;
           }
         }
 
@@ -266,9 +273,12 @@ ipcMain.handle("folder:prompt", async (event) => {
         songId = result.lastInsertRowid;
 
         artists.forEach((artist) => {
-          if (!find("artist", artist)) {
+          const foundArtist = find("artist", artist);
+          if (!foundArtist) {
             const result = insert("artist", artist);
             artistId = result.lastInsertRowid;
+          } else {
+            artistId = foundArtist?.id;
           }
           linkArtistToSong.run(artistId, songId);
         });
@@ -281,6 +291,8 @@ ipcMain.handle("folder:prompt", async (event) => {
   }
   return { skipped: skipped, imported: imported, failed: failed };
 });
+
+ipcMain.handle("song:data", () => {});
 
 app.whenReady().then(async () => {
   if (isDev) {

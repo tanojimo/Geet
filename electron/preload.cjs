@@ -13,5 +13,5 @@ contextBridge.exposeInMainWorld("musicAPI", {
 
 contextBridge.exposeInMainWorld("electronAPI", {
   folderPrompt: () => ipcRenderer.invoke("folder:prompt"),
-  findMetaData: (songs) => ipcRenderer.invoke("find-meta-data", songs),
+  songData: () => ipcRenderer.invoke("song:data"),
 });
