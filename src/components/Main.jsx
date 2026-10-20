@@ -29,7 +29,13 @@ const Main = ({ current }) => {
       <div className="col-span-6">
         {tabs.map(
           (Component, i) =>
-            current == i && <Component key={i} songData={songData} />,
+            current == i && (
+              <Component
+                key={i}
+                songData={songData}
+                setSongData={setSongData}
+              />
+            ),
         )}
       </div>
     </div>
