@@ -1,8 +1,12 @@
 // import { parse } from "node:path";
 import HomeMusicCard from "../cards/HomeMusicCard";
 import HomePlaylistCard from "../cards/HomePlaylistCard";
+import { useEffect } from "react";
 
-const Home = () => {
+const Home = ({ songData }) => {
+  useEffect(() => {
+    console.log("Moved Song Data to Home: ", songData);
+  }, [songData]);
   return (
     <div className="p-7 flex flex-col gap-4">
       <h1 className="text-2xl font-bold">Saved Playlists</h1>
@@ -30,7 +34,9 @@ const Home = () => {
         </div>
       </div>
       <div>
-        <HomeMusicCard />
+        {songData.map((val) => (
+          <HomeMusicCard data={val} />
+        ))}
       </div>
     </div>
   );

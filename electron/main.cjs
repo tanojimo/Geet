@@ -41,6 +41,7 @@ const schema = `
     bitRate       REAL,
     sampleRate    REAL,
     cover         BLOB,
+    coverMime     TEXT,
     releaseYear   INTEGER,
     isFav         INTEGER NOT NULL DEFAULT 0,
     totalPlay     INTEGER NOT NULL DEFAULT 0
@@ -63,8 +64,8 @@ db.exec(schema);
 const insert = (table, val) => {
   const insertPrep = {
     song: db.prepare(
-      `INSERT INTO songs (title, path, albumId, folderId, codec, duration, bitRate, sampleRate, cover, releaseYear)
-      VALUES (@title, @path, @albumId, @folderId, @codec, @duration, @bitRate, @sampleRate, @cover, @releaseYear)`,
+      `INSERT INTO songs (title, path, albumId, folderId, codec, duration, bitRate, sampleRate, cover, coverMime, releaseYear)
+      VALUES (@title, @path, @albumId, @folderId, @codec, @duration, @bitRate, @sampleRate, @cover, @coverMime, @releaseYear)`,
     ),
     album: db.prepare("INSERT INTO albums (name) VALUES (?)"),
     artist: db.prepare("INSERT INTO artists (name) VALUES (?)"),
@@ -128,6 +129,16 @@ const find = (table, val) => {
     return null;
   }
 };
+
+const getEach = db.prepare("SELECT * FROM songs WHERE ?");
+const getAll = db.prepare("SELECT * FROM songs");
+
+const getArtist = db.prepare(`
+  SELECT artists.name
+  FROM artists
+  JOIN artistToSong ats ON ats.artistId = artists.id
+  WHERE ats.songId = ?  
+`);
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -268,6 +279,7 @@ ipcMain.handle("folder:prompt", async (event) => {
           bitRate: metaData.format?.bitrate ?? null,
           sampleRate: metaData.format?.sampleRate ?? null,
           cover: metaData.common.picture?.[0]?.data ?? null,
+          coverMime: metaData.common.picture?.[0]?.format ?? null,
           releaseYear: metaData.common?.year ?? null,
         });
         songId = result.lastInsertRowid;
@@ -292,7 +304,18 @@ ipcMain.handle("folder:prompt", async (event) => {
   return { skipped: skipped, imported: imported, failed: failed };
 });
 
-ipcMain.handle("song:data", () => {});
+ipcMain.handle("song:data", () => {
+  let data = getAll.all();
+  data.forEach((song, i) => {
+    song.artists = getArtist.all(song.id).map((artist) => artist.name);
+    let coverUrl = null;
+    if (song.cover && song.coverMime) {
+      coverUrl = `data:${song.coverMime};base64,${Buffer.from(song.cover).toString("base64")}`;
+    }
+    song.cover = coverUrl;
+  });
+  return data;
+});
 
 app.whenReady().then(async () => {
   if (isDev) {

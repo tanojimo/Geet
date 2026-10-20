@@ -8,10 +8,9 @@ contextBridge.exposeInMainWorld("windowControls", {
 });
 
 contextBridge.exposeInMainWorld("musicAPI", {
-  initializeDB: () => ipcRenderer.send("initialize-db"),
+  songData: () => ipcRenderer.invoke("song:data", (a = []), (b = [])),
 });
 
 contextBridge.exposeInMainWorld("electronAPI", {
   folderPrompt: () => ipcRenderer.invoke("folder:prompt"),
-  songData: () => ipcRenderer.invoke("song:data"),
 });

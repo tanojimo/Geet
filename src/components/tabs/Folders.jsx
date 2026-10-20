@@ -1,9 +1,9 @@
-const Folders = ({ setSongs }) => {
+const Folders = () => {
   const handleSongs = async () => {
     try {
-      const songs = await window.electronAPI.folderPrompt();
-      console.log("Songs returned from Electron:", songs);
-      setSongs(songs);
+      await window.electronAPI.folderPrompt();
+      const data = await window.musicAPI.songData();
+      console.log(data);
     } catch (error) {
       console.log("Failed: ", error);
     }
