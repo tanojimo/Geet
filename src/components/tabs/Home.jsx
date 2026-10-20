@@ -33,7 +33,7 @@ const Home = ({ songData }) => {
           <input type="text" placeholder="Search..." className="pt-0.5 w-50" />
         </div>
       </div>
-      <div>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 justify-center">
         {songData.map((val) => (
           <HomeMusicCard data={val} />
         ))}
