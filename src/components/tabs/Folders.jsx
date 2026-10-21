@@ -1,10 +1,25 @@
+import { useEffect, useState } from "react";
+
 const Folders = ({ setSongData }) => {
+  const [folders, setFolders] = useState([]);
+  useEffect(() => {
+    async function getFolderData() {
+      const folder = await window.musicAPI.folderData();
+      setFolders(folder);
+      console.log("Found Folders:", folder);
+    }
+    getFolderData();
+  }, []);
   const handleSongs = async () => {
     try {
-      await window.electronAPI.folderPrompt();
+      const result = await window.electronAPI.folderPrompt();
+      console.log("Wrote DB: ", result);
       const data = await window.musicAPI.songData();
       setSongData(data);
       console.log(data);
+      const folder = await window.musicAPI.folderData();
+      setFolders(folder);
+      console.log(folder);
     } catch (error) {
       console.log("Failed: ", error);
     }
@@ -39,9 +54,14 @@ const Folders = ({ setSongData }) => {
           </div>
         </div>
       </div>
-      <div className="bg-bg100 h-12 rounded-lg flex items-center pl-5">
-        <h1>1. Bangla</h1>
-      </div>
+      {folders.map((val, i) => (
+        <div
+          className="bg-bg100 h-12 rounded-lg flex items-center pl-5"
+          key={val.id}
+        >
+          <h1>{`${i + 1}. ${val.name}`}</h1>
+        </div>
+      ))}
     </div>
   );
 };

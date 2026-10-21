@@ -17,6 +17,7 @@ const schema = `
 
   CREATE TABLE IF NOT EXISTS folders(
     id     INTEGER PRIMARY KEY,
+    name   TEXT,
     path   TEXT UNIQUE
   );
 
@@ -61,7 +62,7 @@ const schema = `
       `;
 db.exec(schema);
 
-const insert = (table, val) => {
+const insert = (table, val, val1) => {
   const insertPrep = {
     song: db.prepare(
       `INSERT INTO songs (title, path, albumId, folderId, codec, duration, bitRate, sampleRate, cover, coverMime, releaseYear)
@@ -70,7 +71,7 @@ const insert = (table, val) => {
     album: db.prepare("INSERT INTO albums (name) VALUES (?)"),
     artist: db.prepare("INSERT INTO artists (name) VALUES (?)"),
     playlist: db.prepare("INSERT INTO playlists (name) VALUES (?)"),
-    folder: db.prepare("INSERT INTO folders (path) VALUES (?)"),
+    folder: db.prepare("INSERT INTO folders (name, path) VALUES (?, ?)"),
   };
   if (table === "album") {
     const r = insertPrep.album.run(val);
@@ -82,7 +83,7 @@ const insert = (table, val) => {
     const r = insertPrep.playlist.run(val);
     return r;
   } else if (table === "folder") {
-    const r = insertPrep.folder.run(val);
+    const r = insertPrep.folder.run(val, val1);
     return r;
   } else if (table === "song") {
     const r = insertPrep.song.run(val);
@@ -138,6 +139,18 @@ const getArtist = db.prepare(`
   FROM artists
   JOIN artistToSong ats ON ats.artistId = artists.id
   WHERE ats.songId = ?  
+`);
+
+const getFolder = db.prepare(`
+  SELECT folders.path
+  FROM folders
+  JOIN songs ON songs.id = folders.id
+  WHERE songs.id = ?  
+`);
+
+const getAllFolder = db.prepare(`
+  SELECT id, name, path
+  FROM folders  
 `);
 
 function createWindow() {
@@ -254,7 +267,8 @@ ipcMain.handle("folder:prompt", async (event) => {
 
         const foundFolder = find("folder", folderPath);
         if (!foundFolder) {
-          const result = insert("folder", folderPath);
+          let name = path.basename(folderPath);
+          const result = insert("folder", name, folderPath);
           folderId = Number(result.lastInsertRowid);
         } else {
           folderId = foundFolder?.id;
@@ -315,6 +329,11 @@ ipcMain.handle("song:data", () => {
     song.cover = coverUrl;
   });
   return data;
+});
+
+ipcMain.handle("song:allFolder", () => {
+  let folders = getAllFolder.all();
+  return folders;
 });
 
 app.whenReady().then(async () => {
