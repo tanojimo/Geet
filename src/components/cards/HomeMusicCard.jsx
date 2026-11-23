@@ -1,4 +1,10 @@
-const HomeMusicCard = ({ data, playerInfo, handlePlayerInfo }) => {
+const HomeMusicCard = ({
+  data,
+  playerInfo,
+  handlePlayerInfo,
+  playing,
+  setPlaying,
+}) => {
   return (
     <div
       style={
@@ -22,17 +28,17 @@ const HomeMusicCard = ({ data, playerInfo, handlePlayerInfo }) => {
               onClick={() => {
                 handlePlayerInfo("musicId", data.id);
                 handlePlayerInfo("currentDuration", 0);
-                handlePlayerInfo("playing", true);
+                setPlaying(true);
               }}
             >
               <img
                 src={
-                  playerInfo.musicId == data.id && playerInfo.playing
+                  playerInfo.musicId == data.id && playing
                     ? "/pause.svg"
                     : "play.svg"
                 }
                 alt="play"
-                className={`${playerInfo.musicId == data.id && playerInfo.playing ? "w-2" : "w-2.5 ml-0.5"} bg-transparent`}
+                className={`${playerInfo.musicId == data.id && playing ? "w-2" : "w-2.5 ml-0.5"} bg-transparent`}
               />
             </div>
           </div>

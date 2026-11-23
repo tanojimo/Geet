@@ -11,6 +11,8 @@ const Main = ({
   handlePlayerInfo,
   songData,
   setSongData,
+  playing,
+  setPlaying,
 }) => {
   // const tabs = [Home, Search, Playlists, Folders, Albums, Artists];
   const tabs = [Home, Playlists, Folders];
@@ -30,6 +32,8 @@ const Main = ({
                 setSongData={setSongData}
                 playerInfo={playerInfo}
                 handlePlayerInfo={handlePlayerInfo}
+                playing={playing}
+                setPlaying={setPlaying}
               />
             ),
         )}

@@ -3,7 +3,13 @@ import HomeMusicCard from "../cards/HomeMusicCard";
 import HomePlaylistCard from "../cards/HomePlaylistCard";
 import { useEffect } from "react";
 
-const Home = ({ songData, playerInfo, handlePlayerInfo }) => {
+const Home = ({
+  songData,
+  playerInfo,
+  handlePlayerInfo,
+  playing,
+  setPlaying,
+}) => {
   useEffect(() => {
     console.log("Moved Song Data to Home: ", songData);
   }, [songData]);
@@ -40,6 +46,8 @@ const Home = ({ songData, playerInfo, handlePlayerInfo }) => {
             data={val}
             playerInfo={playerInfo}
             handlePlayerInfo={handlePlayerInfo}
+            playing={playing}
+            setPlaying={setPlaying}
           />
         ))}
       </div>

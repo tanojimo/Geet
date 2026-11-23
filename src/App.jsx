@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 const App = () => {
   const [current, setCurrent] = useState(0);
   const [songData, setSongData] = useState([]);
+  const [playing, setPlaying] = useState(false);
   const [playerInfo, setPlayerInfo] = useState({
     musicId: null,
     shuffle: false,
@@ -62,11 +63,15 @@ const App = () => {
         handlePlayerInfo={handlePlayerInfo}
         songData={songData}
         setSongData={setSongData}
+        playing={playing}
+        setPlaying={setPlaying}
       />
       <Controls
         playerInfo={playerInfo}
         handlePlayerInfo={handlePlayerInfo}
         songData={songData}
+        playing={playing}
+        setPlaying={setPlaying}
       />
     </div>
   );

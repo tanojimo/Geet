@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
-const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
+const Controls = ({
+  handlePlayerInfo,
+  playerInfo,
+  songData,
+  playing,
+  setPlaying,
+}) => {
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
+  const [totalDuration, setTotalDuration] = useState(0);
   const [cover, setCover] = useState("/cover.jpg");
   const [playback, setPlayback] = useState(70);
   const audioRef = useRef(new Audio());
@@ -12,23 +19,35 @@ const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
       const index = songData.findIndex(
         (song) => song.id === playerInfo.musicId,
       );
+
+      if (!songData[index]) {
+        return;
+      }
+
+      const duration = Math.floor(songData[index]?.duration);
       console.log(songData[index]);
       setTitle(songData[index]?.title || "Unknown Song");
       setArtist(songData[index]?.artists.join(", ") || "Unknown Artist");
       setCover(songData[index]?.cover || "/cover.jpg");
+      setTotalDuration([Math.floor(duration / 60), duration % 60]);
     };
 
     ref();
     audioRef.current.src = `app://music/${playerInfo.musicId}`;
+
+    if (playerInfo.playing) {
+      audioRef.current.play();
+    }
   }, [playerInfo.musicId, songData]);
 
   useEffect(() => {
-    if (playerInfo.playing) {
+    if (playing) {
+      console.log("Started Playing");
       audioRef.current.play();
     } else {
       audioRef.current.pause();
     }
-  }, [playerInfo.playing]);
+  }, [playing, playerInfo.musicId]);
 
   return (
     <div className="h-23 shrink-0 bg-bg100 grid grid-cols-7 px-2">
@@ -117,14 +136,14 @@ const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
           <div
             className="col-span-1 w-9 h-9 mx-3 bg-accent rounded-full flex justify-center items-center"
             onClick={async () => {
-              if (!playerInfo.playing) {
-                handlePlayerInfo("playing", true);
+              if (!playing) {
+                setPlaying(true);
               } else {
-                handlePlayerInfo("playing", false);
+                setPlaying(false);
               }
             }}
           >
-            {playerInfo.playing ? (
+            {playing ? (
               <svg
                 width="14"
                 viewBox="0 0 28 43"
@@ -238,7 +257,7 @@ const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
               "--multiplier": playback,
             }}
           />
-          <p>03.03</p>
+          <p>{`${totalDuration[0]}:${totalDuration[1]}`}</p>
         </div>
       </div>
       <div className="col-span-2 flex justify-end items-center">
