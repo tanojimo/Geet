@@ -20,12 +20,15 @@ const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
 
     ref();
     audioRef.current.src = `app://music/${playerInfo.musicId}`;
+  }, [playerInfo.musicId, songData]);
+
+  useEffect(() => {
     if (playerInfo.playing) {
       audioRef.current.play();
     } else {
       audioRef.current.pause();
     }
-  }, [playerInfo, songData]);
+  }, [playerInfo.playing]);
 
   return (
     <div className="h-23 shrink-0 bg-bg100 grid grid-cols-7 px-2">
