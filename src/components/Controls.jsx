@@ -1,8 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Controls = () => {
-  const [volume, setVolume] = useState(70);
   const [playback, setPlayback] = useState(70);
+  const [playerInfo, setPlayerInfo] = useState({
+    musicId: null,
+    shuffle: false,
+    repeat: 0,
+    currentDuration: 0,
+    volume: 0,
+    queue: [],
+  });
+
+  useEffect(() => {
+    const ref = async () => {
+      const info = await window.electronAPI.getPlayerInfo();
+      console.log("playerInfo: ", info);
+      setPlayerInfo(info);
+    };
+    ref();
+  }, []);
+
+  const handlePlayerInfo = (infoName, info) => {
+    setPlayerInfo((prev) => {
+      const update = { ...prev, [infoName]: info };
+      window.electronAPI.setPlayerInfo(update);
+      // window.electronAPI.setPlayerInfo({
+      //   musicId: null,
+      //   shuffle: false,
+      //   repeat: 0,
+      //   currentDuration: 0,
+      //   volume: 0,
+      //   queue: [],
+      // });
+
+      return update;
+    });
+  };
 
   return (
     <div className="h-23 shrink-0 bg-bg100 grid grid-cols-7 px-2">
@@ -32,13 +65,20 @@ const Controls = () => {
               </svg>
             </div>
             {/* Shuffle */}
-            <div className="group">
+            <div className="group relative">
               <svg
                 width="20"
                 viewBox="0 0 55 44"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-textgrey group-hover:text-text duration-75"
+                className={`${playerInfo.shuffle ? "text-text" : "text-textgrey"} group-hover:text-text duration-75`}
+                onClick={() => {
+                  if (!playerInfo.shuffle) {
+                    handlePlayerInfo("shuffle", true);
+                  } else {
+                    handlePlayerInfo("shuffle", false);
+                  }
+                }}
               >
                 <path
                   d="M3.30359 35.0179H10.5324C14.2458 35.0179 17.6869 33.0696 19.5974 29.8854L29.2956 13.7218C31.2061 10.5376 34.6471 8.5893 38.3606 8.5893H50.875M45.5893 13.875L50.875 8.5893L45.5893 3.30359"
@@ -55,6 +95,9 @@ const Controls = () => {
                   stroke="currentColor"
                 />
               </svg>
+              <div
+                className={`absolute ${!playerInfo.shuffle && "hidden"} bg-text w-1 h-1 rounded-full top-[120%] left-1/2 transform-[translate(-50%,0%)] duration-75`}
+              ></div>
             </div>
             {/* Backward */}
             <div className="group">
@@ -115,13 +158,20 @@ const Controls = () => {
               </svg>
             </div>
             {/* Repeat */}
-            <div className="group">
+            <div className="group relative">
               <svg
                 width="18"
                 viewBox="0 0 54 54"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="text-textgrey group-hover:text-text duration-75"
+                className={`${playerInfo.repeat ? "text-text" : "text-textgrey"} group-hover:text-text duration-75`}
+                onClick={() => {
+                  if (!playerInfo.repeat) {
+                    handlePlayerInfo("repeat", true);
+                  } else {
+                    handlePlayerInfo("repeat", false);
+                  }
+                }}
               >
                 <path
                   d="M24.5001 17.15L31.8501 9.80001L24.5001 2.45001M31.8501 9.80001H14.2101C10.0937 9.80001 8.03549 9.80001 6.46325 10.6011C5.08025 11.3058 3.95584 12.4302 3.25117 13.8132C2.45007 15.3854 2.45007 17.4436 2.45007 21.56V35.525C2.45007 36.6628 2.45007 37.2317 2.51296 37.7094C2.94718 41.0076 5.54251 43.6029 8.8407 44.037C9.31833 44.1 9.88724 44.1 11.0251 44.1M22.0501 44.1H39.6901C43.8066 44.1 45.8646 44.1 47.437 43.2989C48.82 42.5942 49.9443 41.4699 50.6489 40.0869C51.4501 38.5145 51.4501 36.4565 51.4501 32.34V18.375C51.4501 17.2372 51.4501 16.6683 51.3871 16.1906C50.953 12.8925 48.3577 10.2971 45.0595 9.8629C44.5817 9.80001 44.0129 9.80001 42.8751 9.80001M29.4001 36.75L22.0501 44.1L29.4001 51.45"
@@ -131,6 +181,9 @@ const Controls = () => {
                   strokeLinejoin="round"
                 />
               </svg>
+              <div
+                className={`absolute ${!playerInfo.repeat && "hidden"} bg-text w-1 h-1 rounded-full top-[120%] left-1/2 transform-[translate(-50%,0%)] duration-75`}
+              ></div>
             </div>
             {/* Lyrics */}
             <div className="group">
@@ -176,10 +229,10 @@ const Controls = () => {
           min={0}
           max={100}
           defaultValue={70}
-          onChange={(e) => setVolume(e.target.value)}
+          onChange={(e) => handlePlayerInfo("volume", e.target.value)}
           className="volumeSlider"
           style={{
-            "--value": `${volume}%`,
+            "--value": `${playerInfo.volume}%`,
           }}
         />
       </div>

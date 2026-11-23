@@ -14,4 +14,6 @@ contextBridge.exposeInMainWorld("musicAPI", {
 
 contextBridge.exposeInMainWorld("electronAPI", {
   folderPrompt: () => ipcRenderer.invoke("folder:prompt"),
+  getPlayerInfo: () => ipcRenderer.invoke("get:playerInfo"),
+  setPlayerInfo: (info) => ipcRenderer.invoke("set:playerInfo", info),
 });

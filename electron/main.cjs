@@ -1,9 +1,11 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
-const fs = require("node:fs/promises");
+const fs = require("fs");
 const path = require("node:path");
 const { parseFile } = require("music-metadata");
 const dataBase = require("better-sqlite3");
+const { config } = require("node:process");
 
+const configPath = path.join(app.getPath("userData"), "playerInfo.json");
 const isDev = !app.isPackaged;
 const db = new dataBase(path.join(app.getPath("userData"), "songs.db"));
 db.pragma("journal_mode = WAL");
@@ -334,6 +336,22 @@ ipcMain.handle("song:data", () => {
 ipcMain.handle("song:allFolder", () => {
   let folders = getAllFolder.all();
   return folders;
+});
+
+ipcMain.handle("get:playerInfo", () => {
+  try {
+    if (!fs.existsSync(configPath)) {
+      fs.writeFileSync(configPath, JSON.stringify({}, null, 2));
+    }
+    return JSON.parse(fs.readFileSync(configPath, "utf-8"));
+  } catch (error) {
+    console.error("Faied to read playerinfo: ", error);
+    return {};
+  }
+});
+
+ipcMain.handle("set:playerInfo", (event, info) => {
+  fs.writeFileSync(configPath, JSON.stringify(info, null, 2));
 });
 
 app.whenReady().then(async () => {

@@ -1,12 +1,5 @@
 const Header = ({ current, setCurrent }) => {
-  const buttons = [
-    "Home",
-    "Search",
-    "Playlists",
-    "Folders",
-    "Albums",
-    "Artists",
-  ];
+  const buttons = ["Home", "Playlists", "Folders"];
 
   return (
     <div className="[app-region:drag] flex items-center justify-between pl-3 w-full h-10">
