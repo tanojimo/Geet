@@ -1,49 +1,32 @@
 import { useEffect, useState } from "react";
 
-const Controls = () => {
+const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
+  const [title, setTitle] = useState("");
+  const [artist, setArtist] = useState("");
+  const [cover, setCover] = useState("/cover.jpg");
   const [playback, setPlayback] = useState(70);
-  const [playerInfo, setPlayerInfo] = useState({
-    musicId: null,
-    shuffle: false,
-    repeat: 0,
-    currentDuration: 0,
-    volume: 0,
-    queue: [],
-  });
 
   useEffect(() => {
-    const ref = async () => {
-      const info = await window.electronAPI.getPlayerInfo();
-      console.log("playerInfo: ", info);
-      setPlayerInfo(info);
+    const ref = () => {
+      const index = songData.findIndex(
+        (song) => song.id === playerInfo.musicId,
+      );
+      console.log(songData[index]);
+      setTitle(songData[index]?.title || "Unknown Song");
+      setArtist(songData[index]?.artists.join(", ") || "Unknown Artist");
+      setCover(songData[index]?.cover || "/cover.jpg");
     };
+
     ref();
-  }, []);
-
-  const handlePlayerInfo = (infoName, info) => {
-    setPlayerInfo((prev) => {
-      const update = { ...prev, [infoName]: info };
-      window.electronAPI.setPlayerInfo(update);
-      // window.electronAPI.setPlayerInfo({
-      //   musicId: null,
-      //   shuffle: false,
-      //   repeat: 0,
-      //   currentDuration: 0,
-      //   volume: 0,
-      //   queue: [],
-      // });
-
-      return update;
-    });
-  };
+  }, [playerInfo, songData]);
 
   return (
     <div className="h-23 shrink-0 bg-bg100 grid grid-cols-7 px-2">
       <div className="col-span-2 flex items-center gap-3">
-        <img src="/cover.jpg" alt="cover" className="w-18 h-18 rounded-xl" />
+        <img src={cover} alt="cover" className="w-18 h-18 rounded-xl" />
         <div>
-          <p className="text-2xl/6 mt-1.5">Around The World</p>
-          <p className="text-sm text-gray-300">Artist Name</p>
+          <p className="text-xl/6 font-bold mt-1.5">{title}</p>
+          <p className="text-sm text-gray-300">{artist}</p>
         </div>
       </div>
       <div className="col-span-3 flex-col flex justify-center items-center gap-1">
@@ -89,9 +72,9 @@ const Controls = () => {
                 />
                 <path
                   d="M3.30359 8.58936H10.5324C13.4253 8.58936 16.153 9.77182 18.1204 11.7999M50.875 35.0179H38.3606C35.4677 35.0179 32.74 33.8355 30.7724 31.8074M45.5893 29.7322L50.875 35.0179L45.5893 40.3036"
-                  stroke-width="6.60714"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="6.60714"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   stroke="currentColor"
                 />
               </svg>
@@ -121,19 +104,45 @@ const Controls = () => {
               </svg>
             </div>
           </div>
-          <div className="col-span-1 w-9 h-9 mx-3 bg-accent rounded-full flex justify-center items-center">
-            <svg
-              width="18"
-              viewBox="0 0 39 42"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="ml-1 mt-px text-accent-lightDark"
-            >
-              <path
-                d="M5.4575 0.452336C4.31438 -0.174539 2.93156 -0.146883 1.80688 0.516867C0.682188 1.18062 0 2.38827 0 3.68812V37.6131C0 38.913 0.691407 40.1206 1.80688 40.7844C2.92234 41.4481 4.31438 41.4758 5.4575 40.8489L36.4325 23.8864C37.6125 23.2411 38.35 21.9966 38.35 20.6506C38.35 19.3047 37.6125 18.0601 36.4325 17.4148L5.4575 0.452336Z"
-                fill="currentColor"
-              />
-            </svg>
+          <div
+            className="col-span-1 w-9 h-9 mx-3 bg-accent rounded-full flex justify-center items-center"
+            onClick={() => {
+              if (!playerInfo.playing) {
+                handlePlayerInfo("playing", true);
+              } else {
+                handlePlayerInfo("playing", false);
+              }
+            }}
+          >
+            {playerInfo.playing ? (
+              <svg
+                width="14"
+                viewBox="0 0 28 43"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="ml-px text-accent-lightDark"
+              >
+                <path
+                  d="M4.5 4.5V38.5M23.5 4.5V38.5"
+                  stroke-width="9"
+                  stroke-linecap="round"
+                  stroke="currentColor"
+                />
+              </svg>
+            ) : (
+              <svg
+                width="18"
+                viewBox="0 0 39 42"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="ml-1 mt-px text-accent-lightDark"
+              >
+                <path
+                  d="M5.4575 0.452336C4.31438 -0.174539 2.93156 -0.146883 1.80688 0.516867C0.682188 1.18062 0 2.38827 0 3.68812V37.6131C0 38.913 0.691407 40.1206 1.80688 40.7844C2.92234 41.4481 4.31438 41.4758 5.4575 40.8489L36.4325 23.8864C37.6125 23.2411 38.35 21.9966 38.35 20.6506C38.35 19.3047 37.6125 18.0601 36.4325 17.4148L5.4575 0.452336Z"
+                  fill="currentColor"
+                />
+              </svg>
+            )}
           </div>
           <div className="col-span-3 flex items-center gap-6 justify-baseline">
             {/* Forward */}

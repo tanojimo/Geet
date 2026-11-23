@@ -3,7 +3,7 @@ import HomeMusicCard from "../cards/HomeMusicCard";
 import HomePlaylistCard from "../cards/HomePlaylistCard";
 import { useEffect } from "react";
 
-const Home = ({ songData }) => {
+const Home = ({ songData, playerInfo, handlePlayerInfo }) => {
   useEffect(() => {
     console.log("Moved Song Data to Home: ", songData);
   }, [songData]);
@@ -35,7 +35,11 @@ const Home = ({ songData }) => {
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 justify-center">
         {songData.map((val) => (
-          <HomeMusicCard data={val} />
+          <HomeMusicCard
+            data={val}
+            playerInfo={playerInfo}
+            handlePlayerInfo={handlePlayerInfo}
+          />
         ))}
       </div>
     </div>

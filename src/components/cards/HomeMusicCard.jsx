@@ -1,9 +1,4 @@
-import { useEffect } from "react";
-
-const HomeMusicCard = ({ data }) => {
-  useEffect(() => {
-    console.log(`Moved Song ${data.title} to Card: `, data);
-  }, [data]);
+const HomeMusicCard = ({ data, playerInfo, handlePlayerInfo }) => {
   return (
     <div
       style={
@@ -22,11 +17,22 @@ const HomeMusicCard = ({ data }) => {
             <p className="text-sm">{data.artists.join(", ")}</p>
           </div>
           <div className="flex justify-center w-full">
-            <div className="w-7 h-7 bg-text rounded-full flex justify-center items-center mb-2">
+            <div
+              className="w-7 h-7 bg-text rounded-full flex justify-center items-center mb-2"
+              onClick={() => {
+                handlePlayerInfo("musicId", data.id);
+                handlePlayerInfo("currentDuration", 0);
+                handlePlayerInfo("playing", true);
+              }}
+            >
               <img
-                src="/play.svg"
+                src={
+                  playerInfo.musicId == data.id && playerInfo.playing
+                    ? "/pause.svg"
+                    : "play.svg"
+                }
                 alt="play"
-                className="w-2.5 ml-0.5 bg-transparent"
+                className={`${playerInfo.musicId == data.id && playerInfo.playing ? "w-2" : "w-2.5 ml-0.5"} bg-transparent`}
               />
             </div>
           </div>

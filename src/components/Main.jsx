@@ -4,23 +4,16 @@ import Playlists from "./tabs/Playlists";
 import Folders from "./tabs/Folders";
 // import Albums from "./tabs/Albums";
 // import Artists from "./tabs/Artists";
-import { useState, useEffect } from "react";
 
-const Main = ({ current }) => {
+const Main = ({
+  current,
+  playerInfo,
+  handlePlayerInfo,
+  songData,
+  setSongData,
+}) => {
   // const tabs = [Home, Search, Playlists, Folders, Albums, Artists];
   const tabs = [Home, Playlists, Folders];
-  const [songData, setSongData] = useState([]);
-  useEffect(() => {
-    async function getSongData() {
-      const data = await window.musicAPI.songData();
-      setSongData(data);
-    }
-    getSongData();
-  }, []);
-
-  useEffect(() => {
-    console.log("Received Song Data: ", songData);
-  }, [songData]);
 
   return (
     <div className="flex-1 overflow-y-auto grid grid-cols-8">
@@ -35,6 +28,8 @@ const Main = ({ current }) => {
                 key={i}
                 songData={songData}
                 setSongData={setSongData}
+                playerInfo={playerInfo}
+                handlePlayerInfo={handlePlayerInfo}
               />
             ),
         )}
