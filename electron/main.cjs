@@ -1,9 +1,29 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  protocol,
+  net,
+} = require("electron");
 const fs = require("fs");
 const path = require("node:path");
 const { parseFile } = require("music-metadata");
 const dataBase = require("better-sqlite3");
 const { config } = require("node:process");
+const { pathToFileURL } = require("node:url");
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "app",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      stream: true,
+    },
+  },
+]);
 
 const configPath = path.join(app.getPath("userData"), "playerInfo.json");
 const isDev = !app.isPackaged;
@@ -135,6 +155,7 @@ const find = (table, val) => {
 
 const getEach = db.prepare("SELECT * FROM songs WHERE ?");
 const getAll = db.prepare("SELECT * FROM songs");
+const getPath = db.prepare("SELECT path FROM songs WHERE id = ?");
 
 const getArtist = db.prepare(`
   SELECT artists.name
@@ -355,6 +376,46 @@ ipcMain.handle("set:playerInfo", (event, info) => {
 });
 
 app.whenReady().then(async () => {
+  protocol.handle("app", async (request) => {
+    const url = new URL(request.url);
+    console.log("Request URL: ", url);
+    console.log("Hostname: ", url.hostname);
+
+    if (url.hostname !== "music") {
+      return new Response("Not Found", { status: 404 });
+    }
+
+    const songId = Number(url.pathname.slice(1));
+    console.log("Song ID: ", songId);
+
+    if (!Number.isSafeInteger(songId) || songId <= 0) {
+      return new Response("Song Id not found", { status: 404 });
+    }
+
+    const song = getPath.get(songId);
+    console.log("Song Path: ", song.path);
+    console.log("Song Path to URL: ", pathToFileURL(song.path));
+    console.log(
+      "Song Path to URL String: ",
+      pathToFileURL(song.path).toString(),
+    );
+
+    if (!song) {
+      return new Response("Song not found", { status: 404 });
+    }
+
+    try {
+      const response = await net.fetch(pathToFileURL(song.path).toString(), {
+        headers: request.headers,
+      });
+      console.log("Fetched Data: ", response);
+      return response;
+    } catch (error) {
+      console.error("Song Failed to fetch:", error);
+      return new Response("Song Failed to fetch", { status: 404 });
+    }
+  });
+
   if (isDev) {
     try {
       const {

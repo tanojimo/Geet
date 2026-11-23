@@ -34,8 +34,9 @@ const Home = ({ songData, playerInfo, handlePlayerInfo }) => {
         </div>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4 justify-center">
-        {songData.map((val) => (
+        {songData.map((val, i) => (
           <HomeMusicCard
+            key={i}
             data={val}
             playerInfo={playerInfo}
             handlePlayerInfo={handlePlayerInfo}

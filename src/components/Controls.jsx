@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [cover, setCover] = useState("/cover.jpg");
   const [playback, setPlayback] = useState(70);
+  const audioRef = useRef(new Audio());
 
   useEffect(() => {
     const ref = () => {
@@ -18,6 +19,12 @@ const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
     };
 
     ref();
+    audioRef.current.src = `app://music/${playerInfo.musicId}`;
+    if (playerInfo.playing) {
+      audioRef.current.play();
+    } else {
+      audioRef.current.pause();
+    }
   }, [playerInfo, songData]);
 
   return (
@@ -106,7 +113,7 @@ const Controls = ({ handlePlayerInfo, playerInfo, songData }) => {
           </div>
           <div
             className="col-span-1 w-9 h-9 mx-3 bg-accent rounded-full flex justify-center items-center"
-            onClick={() => {
+            onClick={async () => {
               if (!playerInfo.playing) {
                 handlePlayerInfo("playing", true);
               } else {
