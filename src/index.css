@@ -59,7 +59,7 @@ input:focus {
 }
 
 .playbackSlider {
-  @apply appearance-none w-120 h-1 rounded-full cursor-pointer;
+  @apply appearance-none w-100 h-1 rounded-full cursor-pointer;
   --gap: calc(var(--value) + (5 - (0.03 * var(--multiplier))) * 1%);
   background: linear-gradient(
     to right,

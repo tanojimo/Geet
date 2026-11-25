@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const Controls = ({
   handlePlayerInfo,
@@ -6,14 +6,15 @@ const Controls = ({
   songData,
   playing,
   setPlaying,
+  audioRef,
 }) => {
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
+  const [playback, setPlayback] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
+  const [currentDuration, setCurrentDuration] = useState([0, 0]);
+  const [isDragging, setIsDragging] = useState(false);
   const [cover, setCover] = useState("/cover.jpg");
-  const [playback, setPlayback] = useState(70);
-  const audioRef = useRef(new Audio());
-
   useEffect(() => {
     const ref = () => {
       const index = songData.findIndex(
@@ -34,20 +35,55 @@ const Controls = ({
 
     ref();
     audioRef.current.src = `app://music/${playerInfo.musicId}`;
-
-    if (playerInfo.playing) {
-      audioRef.current.play();
-    }
-  }, [playerInfo.musicId, songData]);
+    // console.log("Changed source");
+  }, [playerInfo.musicId, songData, audioRef]);
 
   useEffect(() => {
     if (playing) {
-      console.log("Started Playing");
       audioRef.current.play();
     } else {
       audioRef.current.pause();
     }
-  }, [playing, playerInfo.musicId]);
+  }, [playing, playerInfo.musicId, audioRef]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    const changeProgress = () => {
+      if (!Number.isFinite(audio.duration) || audio.duration <= 0) {
+        return;
+      }
+      const currentTime = Math.floor(audio.currentTime);
+      setCurrentDuration([Math.floor(currentTime / 60), currentTime % 60]);
+      handlePlayerInfo("currentDuration", currentTime);
+
+      if (!isDragging) {
+        setPlayback((currentTime / Math.floor(audio.duration)) * 100);
+      }
+    };
+    audio.addEventListener("timeupdate", changeProgress);
+    return () => {
+      audio.removeEventListener("timeupdate", changeProgress);
+    };
+  }, [isDragging, audioRef, handlePlayerInfo]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    const events = ["seeking", "seeked", "waiting", "canplay", "error"];
+
+    events.forEach((event) => {
+      audio.addEventListener(event, () => {
+        console.log(event, {
+          currentTime: audio.currentTime,
+          error: audio.error,
+        });
+      });
+    });
+
+    return () => {
+      // Temporary debugging listener
+    };
+  }, []);
 
   return (
     <div className="h-23 shrink-0 bg-bg100 grid grid-cols-7 px-2">
@@ -94,9 +130,9 @@ const Controls = ({
               >
                 <path
                   d="M3.30359 35.0179H10.5324C14.2458 35.0179 17.6869 33.0696 19.5974 29.8854L29.2956 13.7218C31.2061 10.5376 34.6471 8.5893 38.3606 8.5893H50.875M45.5893 13.875L50.875 8.5893L45.5893 3.30359"
-                  stroke-width="6.60714"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="6.60714"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   stroke="currentColor"
                 />
                 <path
@@ -126,8 +162,8 @@ const Controls = ({
                 />
                 <path
                   d="M3 3V35M11.1571 19.1611L28.413 6.65055C29.0742 6.17123 30 6.64356 30 7.46016V31.6185C30 32.4198 29.1047 32.8957 28.4405 32.4474L11.1846 20.7996C10.609 20.4111 10.5949 19.5687 11.1571 19.1611Z"
-                  stroke-width="6"
-                  stroke-linecap="round"
+                  strokeWidth="6"
+                  strokeLinecap="round"
                   stroke="currentColor"
                 />
               </svg>
@@ -153,8 +189,8 @@ const Controls = ({
               >
                 <path
                   d="M4.5 4.5V38.5M23.5 4.5V38.5"
-                  stroke-width="9"
-                  stroke-linecap="round"
+                  strokeWidth="9"
+                  strokeLinecap="round"
                   stroke="currentColor"
                 />
               </svg>
@@ -189,8 +225,8 @@ const Controls = ({
                 />
                 <path
                   d="M3 3V35M11.1571 19.1611L28.413 6.65055C29.0742 6.17123 30 6.64356 30 7.46016V31.6185C30 32.4198 29.1047 32.8957 28.4405 32.4474L11.1846 20.7996C10.609 20.4111 10.5949 19.5687 11.1571 19.1611Z"
-                  stroke-width="6"
-                  stroke-linecap="round"
+                  strokeWidth="6"
+                  strokeLinecap="round"
                   stroke="currentColor"
                 />
               </svg>
@@ -244,20 +280,62 @@ const Controls = ({
           </div>
         </div>
         <div className="flex justify-center items-center gap-3">
-          <p>00.00</p>
+          <p>{`${String(currentDuration[0]).padStart(2, "0")}:${String(currentDuration[1]).padStart(2, "0")}`}</p>
           <input
             type="range"
             min={0}
             max={100}
-            defaultValue={70}
-            onChange={(e) => setPlayback(e.target.value)}
+            value={playback}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setIsDragging(true);
+            }}
+            onChange={(e) => {
+              setPlayback(Number(e.target.value));
+            }}
+            onPointerUp={(e) => {
+              const audio = audioRef.current;
+              console.log("Audio Element: ", audio);
+              const newPlayback = Number(e.currentTarget.value);
+              console.log("New Element: ", newPlayback);
+
+              if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                console.log("Number is Finite");
+                const newTime = (newPlayback / 100) * audio.duration;
+                console.log("new Time: ", newTime);
+                audio.currentTime = newTime;
+                console.log({
+                  currentTime: audio.currentTime,
+                  duration: audio.duration,
+                  seeking: audio.seeking,
+                  seekable: audio.seekable.length,
+                  buffered: audio.buffered.length,
+                  readyState: audio.readyState,
+                  networkState: audio.networkState,
+                  error: audio.error,
+                });
+                handlePlayerInfo("currentDuration", newTime);
+                console.log("playerInfo: ", playerInfo);
+
+                setCurrentDuration([
+                  Math.floor(newTime / 60),
+                  Math.floor(newTime % 60),
+                ]);
+
+                setPlayback(newPlayback);
+              }
+              setIsDragging(false);
+            }}
+            onPointerCancel={() => {
+              setIsDragging(false);
+            }}
             className="playbackSlider"
             style={{
               "--value": `${playback}%`,
               "--multiplier": playback,
             }}
           />
-          <p>{`${totalDuration[0]}:${totalDuration[1]}`}</p>
+          <p>{`${String(totalDuration[0]).padStart(2, "0")}:${String(totalDuration[1]).padStart(2, "0")}`}</p>
         </div>
       </div>
       <div className="col-span-2 flex justify-end items-center">

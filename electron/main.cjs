@@ -10,8 +10,9 @@ const fs = require("fs");
 const path = require("node:path");
 const { parseFile } = require("music-metadata");
 const dataBase = require("better-sqlite3");
-const { config } = require("node:process");
 const { pathToFileURL } = require("node:url");
+const { readable, Readable } = require("node:stream");
+const { bytes } = require("node:stream/consumers");
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -378,41 +379,120 @@ ipcMain.handle("set:playerInfo", (event, info) => {
 app.whenReady().then(async () => {
   protocol.handle("app", async (request) => {
     const url = new URL(request.url);
-    console.log("Request URL: ", url);
-    console.log("Hostname: ", url.hostname);
 
     if (url.hostname !== "music") {
       return new Response("Not Found", { status: 404 });
     }
 
     const songId = Number(url.pathname.slice(1));
-    console.log("Song ID: ", songId);
 
     if (!Number.isSafeInteger(songId) || songId <= 0) {
       return new Response("Song Id not found", { status: 404 });
     }
 
     const song = getPath.get(songId);
-    console.log("Song Path: ", song.path);
-    console.log("Song Path to URL: ", pathToFileURL(song.path));
-    console.log(
-      "Song Path to URL String: ",
-      pathToFileURL(song.path).toString(),
-    );
 
     if (!song) {
       return new Response("Song not found", { status: 404 });
     }
 
     try {
-      const response = await net.fetch(pathToFileURL(song.path).toString(), {
-        headers: request.headers,
+      const filePath = song.path;
+      const stat = await fs.promises.stat(filePath);
+      const size = stat.size;
+      const extName = path.extname(filePath).toLowerCase();
+
+      const mimeTypes = {
+        ".mp3": "audio/mpeg",
+        ".flac": "audio/flac",
+        ".wav": "audio/wav",
+        ".m4a": "audio/mp4",
+        ".aac": "audio/aac",
+        ".ogg": "audio/ogg",
+        ".opus": "audio/ogg",
+      };
+
+      const headers = {
+        "Content-Type": mimeTypes[extName] || "application/octet-stream",
+        "Accept-Ranges": "bytes",
+      };
+
+      if (request.method === "HEAD") {
+        headers["Content-Length"] = String(size);
+        return new Response(null, {
+          status: 200,
+          headers,
+        });
+      }
+
+      const range = request.headers.get("range");
+      let start = 0;
+      let end = size - 1;
+      let status = 200;
+
+      if (range) {
+        const match = range.match(/^bytes=(\d*)-(\d*)$/);
+
+        if (!match) {
+          return new Response(null, {
+            status: 416,
+            headers: {
+              "Content-Range": `bytes */${size}`,
+            },
+          });
+        }
+
+        const [, rangeStart, rangeEnd] = match;
+
+        if (rangeStart == "") {
+          const suffixLength = Number(rangeEnd);
+
+          if (suffixLength <= 0) {
+            return new Response(null, { status: 416 });
+          }
+
+          start = Math.max(size - suffixLength, 0);
+        } else {
+          start = Number(rangeStart);
+
+          if (rangeEnd !== "") {
+            end = Math.min(Number(rangeEnd), size - 1);
+          }
+        }
+
+        if (
+          !Number.isSafeInteger(start) ||
+          !Number.isSafeInteger(end) ||
+          start < 0 ||
+          start >= size ||
+          end < start
+        ) {
+          return new Response(null, {
+            status: 416,
+            headers: {
+              "Content-Range": `bytes */${size}`,
+            },
+          });
+        }
+
+        status = 206;
+
+        headers["Content-Range"] = `bytes ${start}-${end}/${size}`;
+      }
+      headers["Content-Length"] = String(end - start + 1);
+
+      const stream = fs.createReadStream(filePath, {
+        start,
+        end,
       });
-      console.log("Fetched Data: ", response);
-      return response;
+
+      return new Response(Readable.toWeb(stream), {
+        status,
+        headers,
+      });
     } catch (error) {
       console.error("Song Failed to fetch:", error);
-      return new Response("Song Failed to fetch", { status: 404 });
+      return new Response("Song Failed to fetch", { status: 500 });
     }
   });
 

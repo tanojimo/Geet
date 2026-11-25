@@ -1,11 +1,14 @@
 import Controls from "./components/Controls";
 import Header from "./components/Header";
 import Main from "./components/Main";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const App = () => {
+  const audioRef = useRef(new Audio());
+
   const [current, setCurrent] = useState(0);
   const [songData, setSongData] = useState([]);
+
   const [playing, setPlaying] = useState(false);
   const [playerInfo, setPlayerInfo] = useState({
     musicId: null,
@@ -14,7 +17,6 @@ const App = () => {
     currentDuration: 0,
     volume: 0,
     queue: [],
-    playing: false,
   });
 
   const handlePlayerInfo = (infoName, info) => {
@@ -37,22 +39,12 @@ const App = () => {
   useEffect(() => {
     const ref = async () => {
       const info = await window.electronAPI.getPlayerInfo();
+      const data = await window.musicAPI.songData();
       setPlayerInfo(info);
+      setSongData(data);
     };
     ref();
   }, []);
-
-  useEffect(() => {
-    async function getSongData() {
-      const data = await window.musicAPI.songData();
-      setSongData(data);
-    }
-    getSongData();
-  }, []);
-
-  // useEffect(() => {
-  //   console.log(songData);
-  // }, []);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -72,6 +64,7 @@ const App = () => {
         songData={songData}
         playing={playing}
         setPlaying={setPlaying}
+        audioRef={audioRef}
       />
     </div>
   );
