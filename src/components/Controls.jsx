@@ -344,8 +344,11 @@ const Controls = ({
           type="range"
           min={0}
           max={100}
-          defaultValue={70}
-          onChange={(e) => handlePlayerInfo("volume", e.target.value)}
+          value={playerInfo.volume}
+          onChange={(e) => {
+            handlePlayerInfo("volume", e.target.value);
+            audioRef.current.volume = e.target.value / 100;
+          }}
           className="volumeSlider"
           style={{
             "--value": `${playerInfo.volume}%`,
