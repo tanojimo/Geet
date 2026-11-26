@@ -3,40 +3,33 @@ import { useEffect, useState } from "react";
 const Controls = ({
   handlePlayerInfo,
   playerInfo,
+  setSongData,
   songData,
   playing,
   setPlaying,
   audioRef,
 }) => {
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
+  const [index, setIndex] = useState(null);
   const [playback, setPlayback] = useState(0);
-  const [totalDuration, setTotalDuration] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(["00", "00"]);
   const [currentDuration, setCurrentDuration] = useState([0, 0]);
   const [isDragging, setIsDragging] = useState(false);
-  const [cover, setCover] = useState("/cover.jpg");
   useEffect(() => {
     const ref = () => {
-      const index = songData.findIndex(
-        (song) => song.id === playerInfo.musicId,
-      );
+      const i = songData.findIndex((song) => song.id === playerInfo.musicId);
+      setIndex(i);
 
-      if (!songData[index]) {
+      if (!songData[i]) {
         return;
       }
-
-      const duration = Math.floor(songData[index]?.duration);
-      console.log(songData[index]);
-      setTitle(songData[index]?.title || "Unknown Song");
-      setArtist(songData[index]?.artists.join(", ") || "Unknown Artist");
-      setCover(songData[index]?.cover || "/cover.jpg");
+      console.log(songData[i]);
+      const duration = Math.floor(songData[i]?.duration);
       setTotalDuration([Math.floor(duration / 60), duration % 60]);
     };
 
     ref();
     audioRef.current.src = `app://music/${playerInfo.musicId}`;
-    // console.log("Changed source");
-  }, [playerInfo.musicId, songData, audioRef]);
+  }, [playerInfo.musicId, audioRef]);
 
   useEffect(() => {
     if (playing) {
@@ -66,51 +59,71 @@ const Controls = ({
     };
   }, [isDragging, audioRef, handlePlayerInfo]);
 
-  useEffect(() => {
-    const audio = audioRef.current;
-
-    const events = ["seeking", "seeked", "waiting", "canplay", "error"];
-
-    events.forEach((event) => {
-      audio.addEventListener(event, () => {
-        console.log(event, {
-          currentTime: audio.currentTime,
-          error: audio.error,
-        });
-      });
-    });
-
-    return () => {
-      // Temporary debugging listener
-    };
-  }, []);
-
   return (
     <div className="h-23 shrink-0 bg-bg100 grid grid-cols-7 px-2">
       <div className="col-span-2 flex items-center gap-3">
-        <img src={cover} alt="cover" className="w-18 h-18 rounded-xl" />
+        <img
+          src={songData[index]?.cover || "/cover.jpg"}
+          alt="cover"
+          className="w-18 h-18 rounded-xl"
+        />
         <div>
-          <p className="text-xl/6 font-bold mt-1.5">{title}</p>
-          <p className="text-sm text-gray-300">{artist}</p>
+          <p className="text-xl/6 font-bold mt-1.5">
+            {songData[index]?.title || "Unknown Song"}
+          </p>
+          <p className="text-sm text-gray-300">
+            {songData[index]?.artists.join(", ") || "Unknown Artist"}
+          </p>
         </div>
       </div>
       <div className="col-span-3 flex-col flex justify-center items-center gap-1">
         <div className="grid grid-cols-7 flex-row gap-4">
           <div className="col-span-3 flex flex-row items-center gap-6 justify-end">
             {/* Liked */}
-            <div className="group">
-              <svg
-                width="20"
-                viewBox="0 0 20 18"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-textgrey group-hover:text-text duration-75"
-              >
-                <path
-                  d="M10 18L1.57733 9.39384C0.560222 8.35457 0 6.97266 0 5.50266C0 4.03287 0.560222 2.65097 1.57756 1.6117C2.59467 0.572427 3.94711 0 5.38556 0C6.824 0 8.17645 0.572427 9.19378 1.6117L10 2.43571L10.8067 1.6117C11.8236 0.572427 13.176 0 14.6147 0C16.0533 0 17.4058 0.572427 18.4227 1.61192C19.4398 2.65097 20 4.03287 20 5.50266C20 6.97266 19.4398 8.35457 18.4224 9.39361L10 18ZM5.38533 1.81651C4.42178 1.81651 3.51578 2.19979 2.83444 2.89619C2.15311 3.59237 1.77778 4.51811 1.77778 5.50266C1.77778 6.4872 2.15311 7.41317 2.83444 8.10912L10 15.4308L17.1653 8.10934C17.8471 7.41317 18.2222 6.48743 18.2222 5.50266C18.2222 4.51811 17.8471 3.59237 17.1656 2.89619C16.4842 2.20002 15.578 1.81651 14.6147 1.81651C13.6513 1.81651 12.7451 2.19979 12.0638 2.89619L10 5.00471L7.93644 2.89619C7.25489 2.20002 6.34911 1.81651 5.38533 1.81651Z"
-                  fill="currentColor"
-                />
-              </svg>
+            <div
+              className="group"
+              onClick={async () => {
+                console.log(index);
+                console.log(songData[index].isFav);
+                await window.musicAPI.setIsFav(index + 1);
+                const data = await window.musicAPI.songData();
+                setSongData(data);
+              }}
+            >
+              {songData[index]?.isFav == 1 ? (
+                <svg
+                  width="20"
+                  height="18"
+                  viewBox="0 0 20 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g clip-path="url(#clip0_2237_2)">
+                    <path
+                      d="M10 18L1.57733 9.39384C0.560222 8.35457 0 6.97266 0 5.50266C0 4.03287 0.560222 2.65097 1.57756 1.6117C2.59467 0.572427 3.94711 0 5.38556 0C6.824 0 8.17645 0.572427 9.19378 1.6117L10 2.43571L10.8067 1.6117C11.8236 0.572427 13.176 0 14.6147 0C16.0533 0 17.4058 0.572427 18.4227 1.61192C19.4398 2.65097 20 4.03287 20 5.50266C20 6.97266 19.4398 8.35457 18.4224 9.39361L10 18Z"
+                      fill="#ffffff"
+                    />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_2237_2">
+                      <rect width="20" height="18" fill="white" />
+                    </clipPath>
+                  </defs>
+                </svg>
+              ) : (
+                <svg
+                  width="20"
+                  viewBox="0 0 20 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="text-textgrey group-hover:text-text duration-75"
+                >
+                  <path
+                    d="M10 18L1.57733 9.39384C0.560222 8.35457 0 6.97266 0 5.50266C0 4.03287 0.560222 2.65097 1.57756 1.6117C2.59467 0.572427 3.94711 0 5.38556 0C6.824 0 8.17645 0.572427 9.19378 1.6117L10 2.43571L10.8067 1.6117C11.8236 0.572427 13.176 0 14.6147 0C16.0533 0 17.4058 0.572427 18.4227 1.61192C19.4398 2.65097 20 4.03287 20 5.50266C20 6.97266 19.4398 8.35457 18.4224 9.39361L10 18ZM5.38533 1.81651C4.42178 1.81651 3.51578 2.19979 2.83444 2.89619C2.15311 3.59237 1.77778 4.51811 1.77778 5.50266C1.77778 6.4872 2.15311 7.41317 2.83444 8.10912L10 15.4308L17.1653 8.10934C17.8471 7.41317 18.2222 6.48743 18.2222 5.50266C18.2222 4.51811 17.8471 3.59237 17.1656 2.89619C16.4842 2.20002 15.578 1.81651 14.6147 1.81651C13.6513 1.81651 12.7451 2.19979 12.0638 2.89619L10 5.00471L7.93644 2.89619C7.25489 2.20002 6.34911 1.81651 5.38533 1.81651Z"
+                    fill="currentColor"
+                  />
+                </svg>
+              )}
             </div>
             {/* Shuffle */}
             <div className="group relative">
@@ -295,27 +308,12 @@ const Controls = ({
             }}
             onPointerUp={(e) => {
               const audio = audioRef.current;
-              console.log("Audio Element: ", audio);
               const newPlayback = Number(e.currentTarget.value);
-              console.log("New Element: ", newPlayback);
 
               if (Number.isFinite(audio.duration) && audio.duration > 0) {
-                console.log("Number is Finite");
                 const newTime = (newPlayback / 100) * audio.duration;
-                console.log("new Time: ", newTime);
                 audio.currentTime = newTime;
-                console.log({
-                  currentTime: audio.currentTime,
-                  duration: audio.duration,
-                  seeking: audio.seeking,
-                  seekable: audio.seekable.length,
-                  buffered: audio.buffered.length,
-                  readyState: audio.readyState,
-                  networkState: audio.networkState,
-                  error: audio.error,
-                });
                 handlePlayerInfo("currentDuration", newTime);
-                console.log("playerInfo: ", playerInfo);
 
                 setCurrentDuration([
                   Math.floor(newTime / 60),

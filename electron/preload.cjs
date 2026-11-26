@@ -10,10 +10,12 @@ contextBridge.exposeInMainWorld("windowControls", {
 contextBridge.exposeInMainWorld("musicAPI", {
   songData: () => ipcRenderer.invoke("song:data"),
   folderData: () => ipcRenderer.invoke("song:allFolder"),
+  setIsFav: (id) => ipcRenderer.invoke("set:isFav", id),
 });
 
 contextBridge.exposeInMainWorld("electronAPI", {
   folderPrompt: () => ipcRenderer.invoke("folder:prompt"),
+  getSongFromFolder: (id) => ipcRenderer.invoke("get:songsFromFolder", id),
   getPlayerInfo: () => ipcRenderer.invoke("get:playerInfo"),
   setPlayerInfo: (info) => ipcRenderer.invoke("set:playerInfo", info),
 });

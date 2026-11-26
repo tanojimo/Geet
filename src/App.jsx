@@ -61,6 +61,7 @@ const App = () => {
       <Controls
         playerInfo={playerInfo}
         handlePlayerInfo={handlePlayerInfo}
+        setSongData={setSongData}
         songData={songData}
         playing={playing}
         setPlaying={setPlaying}

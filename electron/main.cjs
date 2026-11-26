@@ -156,7 +156,9 @@ const find = (table, val) => {
 
 const getEach = db.prepare("SELECT * FROM songs WHERE ?");
 const getAll = db.prepare("SELECT * FROM songs");
+const getAllFromFolder = db.prepare("SELECT * FROM songs WHERE folderId = ?");
 const getPath = db.prepare("SELECT path FROM songs WHERE id = ?");
+const getIsFav = db.prepare("SELECT isFav FROM songs WHERE id = ?");
 
 const getArtist = db.prepare(`
   SELECT artists.name
@@ -176,6 +178,8 @@ const getAllFolder = db.prepare(`
   SELECT id, name, path
   FROM folders  
 `);
+
+const setIsFav = db.prepare("UPDATE songs SET isFav = ? WHERE id = ?");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -374,6 +378,31 @@ ipcMain.handle("get:playerInfo", () => {
 
 ipcMain.handle("set:playerInfo", (event, info) => {
   fs.writeFileSync(configPath, JSON.stringify(info, null, 2));
+});
+
+ipcMain.handle("set:isFav", (event, id) => {
+  console.log(id);
+  const song = getIsFav.get(id);
+  console.log(song);
+
+  const answer = song.isFav == 1 ? 0 : 1;
+  console.log(answer);
+  setIsFav.run(answer, id);
+});
+
+ipcMain.handle("get:songsFromFolder", (event, id) => {
+  console.log(id);
+  const song = getAllFromFolder.all(id);
+  song.forEach((val, i) => {
+    val.artists = getArtist.all(val.id).map((artist) => artist.name);
+    let coverUrl = null;
+    if (val.cover && val.coverMime) {
+      coverUrl = `data:${val.coverMime};base64,${Buffer.from(val.cover).toString("base64")}`;
+    }
+    val.cover = coverUrl;
+  });
+  console.log(song);
+  return song;
 });
 
 app.whenReady().then(async () => {
